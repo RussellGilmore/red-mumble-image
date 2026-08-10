@@ -19,7 +19,7 @@ data "amazon-ami" "ubuntu_noble_arm64" {
   region      = var.region
 }
 
-source "amazon-ebs" "k3s" {
+source "amazon-ebs" "mumble" {
   region                      = var.region
   instance_type               = var.instance_type
   vpc_id                      = var.vpc_id
@@ -33,7 +33,7 @@ source "amazon-ebs" "k3s" {
 
   source_ami      = data.amazon-ami.ubuntu_noble_arm64.id
   ami_name        = local.ami_name
-  ami_description = "K3s ${var.k3s_version} single-node image on Ubuntu ${local.ubuntu_release} ${local.architecture}"
+  ami_description = "Mumble (murmur) server image with certbot DNS-01 auto-TLS on Ubuntu ${local.ubuntu_release} ${local.architecture}"
 
   launch_block_device_mappings {
     device_name           = "/dev/sda1"
@@ -51,14 +51,13 @@ source "amazon-ebs" "k3s" {
   }
 
   tags = merge({
-    Name               = local.ami_name
-    OS                 = "ubuntu-${local.ubuntu_release}"
-    Architecture       = local.architecture
-    K3sVersion         = var.k3s_version
-    CertManagerVersion = var.cert_manager_version
-    SourceAMI          = data.amazon-ami.ubuntu_noble_arm64.id
-    BuildDate          = local.timestamp
-    ManagedBy          = "Packer"
+    Name          = local.ami_name
+    OS            = "ubuntu-${local.ubuntu_release}"
+    Architecture  = local.architecture
+    MumbleVersion = var.mumble_version
+    SourceAMI     = data.amazon-ami.ubuntu_noble_arm64.id
+    BuildDate     = local.timestamp
+    ManagedBy     = "Packer"
   }, var.extra_tags)
 
   run_tags = {
@@ -70,14 +69,14 @@ source "amazon-ebs" "k3s" {
   }
 
   snapshot_tags = {
-    Name       = local.ami_name
-    K3sVersion = var.k3s_version
+    Name          = local.ami_name
+    MumbleVersion = var.mumble_version
   }
 }
 
 build {
-  name    = "red-k3s"
-  sources = ["source.amazon-ebs.k3s"]
+  name    = "red-mumble"
+  sources = ["source.amazon-ebs.mumble"]
 
   provisioner "shell" {
     script          = "scripts/00-wait-cloud-init.sh"
@@ -87,8 +86,7 @@ build {
   provisioner "shell" {
     script          = "scripts/10-apt-baseline.sh"
     execute_command = "sudo -E bash '{{ .Path }}'"
-    # apt can take a few minutes after a fresh release
-    timeout = "15m"
+    timeout         = "15m"
   }
 
   provisioner "shell" {
@@ -102,34 +100,26 @@ build {
   }
 
   provisioner "shell" {
-    script          = "scripts/30-install-k3s.sh"
-    execute_command = "{{.Vars}} sudo --preserve-env=K3S_VERSION bash '{{ .Path }}'"
-    environment_vars = [
-      "K3S_VERSION=${var.k3s_version}",
-    ]
-  }
-
-  # NOTE: source = "files" copies the *contents* of files/ directly into
-  # the destination — no nested files/ dir. STAGING in script 40 matches this.
-  provisioner "file" {
-    source      = "files"
-    destination = "/tmp/red-k3s-staging"
-  }
-
-  provisioner "shell" {
-    script          = "scripts/40-install-helm-and-stage-assets.sh"
-    execute_command = "{{.Vars}} sudo --preserve-env=CERT_MANAGER_VERSION,HELM_VERSION bash '{{ .Path }}'"
-    environment_vars = [
-      "CERT_MANAGER_VERSION=${var.cert_manager_version}",
-      "HELM_VERSION=${var.helm_version}",
-    ]
-  }
-
-  provisioner "shell" {
-    script          = "scripts/50-install-bootstrap.sh"
+    script          = "scripts/30-install-mumble.sh"
     execute_command = "sudo -E bash '{{ .Path }}'"
   }
 
+  provisioner "shell" {
+    script          = "scripts/35-install-certbot.sh"
+    execute_command = "sudo -E bash '{{ .Path }}'"
+  }
+
+  # source = "files" copies the *contents* of files/ directly into the
+  # destination — no nested files/ dir. STAGING in script 40 matches this.
+  provisioner "file" {
+    source      = "files"
+    destination = "/tmp/red-mumble-staging"
+  }
+
+  provisioner "shell" {
+    script          = "scripts/40-stage-assets.sh"
+    execute_command = "sudo -E bash '{{ .Path }}'"
+  }
 
   provisioner "shell" {
     script          = "scripts/99-cleanup.sh"

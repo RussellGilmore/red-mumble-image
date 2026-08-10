@@ -13,7 +13,31 @@ variable "instance_type" {
 variable "ami_name_prefix" {
   type        = string
   description = "Prefix for the resulting AMI name."
-  default     = "red-k3s"
+  default     = "red-mumble"
+}
+
+variable "mumble_version" {
+  type        = string
+  description = "Mumble-server version installed (for tagging/traceability). Informational; apt installs the distro package."
+  default     = "distro"
+}
+
+variable "source_ami_owner" {
+  type        = string
+  description = "Owner account ID for the source Ubuntu AMI (Canonical)."
+  default     = "099720109477"
+}
+
+variable "ssh_username" {
+  type        = string
+  description = "SSH username for the build instance."
+  default     = "ubuntu"
+}
+
+variable "root_volume_size" {
+  type        = number
+  description = "Root EBS volume size in GB for the build and resulting AMI."
+  default     = 16
 }
 
 variable "extra_tags" {
