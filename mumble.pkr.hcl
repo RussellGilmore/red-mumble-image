@@ -1,7 +1,7 @@
 locals {
   timestamp      = formatdate("YYYYMMDD-hhmmss", timestamp())
   ami_name       = "${var.ami_name_prefix}-${local.timestamp}"
-  ubuntu_release = "noble-24.04"
+  ubuntu_release = "noble-26.04"
   architecture   = "arm64"
 }
 
