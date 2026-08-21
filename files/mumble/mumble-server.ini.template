@@ -1,0 +1,29 @@
+; Mumble (murmur) server configuration — rendered at first boot from
+; /etc/red-mumble/mumble-server.ini.template by mumble-first-boot.sh.
+; Domain-specific and secret values are injected at runtime; nothing
+; sensitive is baked into the AMI.
+
+database=/var/lib/mumble-server/mumble-server.sqlite
+
+; TLS: certs are placed here by the certbot deploy-hook
+; (/etc/letsencrypt/renewal-hooks/deploy/mumble-certs.sh).
+sslCert=/etc/ssl/mumble/fullchain.pem
+sslKey=/etc/ssl/mumble/privkey.pem
+
+; Bind on all interfaces, default mumble port.
+host=
+port=64738
+
+; Welcome message shown to connecting clients. Override at runtime if desired.
+welcometext="<br />Welcome to this Mumble server.<br />"
+
+; Users / channels
+users=100
+; registerName sets the root channel name; left generic for a public image.
+registerName=Root
+
+; Logging
+logfile=/var/log/mumble-server/mumble-server.log
+
+; The server password (if any) and SuperUser password are NOT set here.
+; SuperUser password is set at first boot via the mumble-server CLI.
