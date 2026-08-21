@@ -25,5 +25,7 @@ registerName=Root
 ; Logging
 logfile=/var/log/mumble-server/mumble-server.log
 
-; The server password (if any) and SuperUser password are NOT set here.
-; SuperUser password is set at first boot via the mumble-server CLI.
+; SuperUser password is injected here at first boot, read into the database
+; on the first start, then stripped from this file by mumble-first-boot.sh.
+; It must NOT persist in plaintext on disk.
+superuserpassword=__MUMBLE_SUPERUSER_PASSWORD__
