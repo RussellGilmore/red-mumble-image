@@ -64,6 +64,9 @@ cp "${TEMPLATE}" "${MUMBLE_INI}"
 # Inject the SuperUser password into the placeholder. '|' delimiter avoids
 # collisions with '/' in the password.
 sed -i "s|__MUMBLE_SUPERUSER_PASSWORD__|${MUMBLE_SUPERUSER_PASSWORD}|" "${MUMBLE_INI}"
+# Inject the welcome text (optional; falls back to a generic default).
+WELCOME="${MUMBLE_WELCOME_TEXT:-Welcome to this Mumble server.}"
+sed -i "s|__MUMBLE_WELCOME_TEXT__|${WELCOME}|" "${MUMBLE_INI}"
 
 # Ownership: mumble-server (the service user) must be able to read this.
 chown root:mumble-server "${MUMBLE_INI}"

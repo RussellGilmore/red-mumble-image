@@ -14,8 +14,8 @@ sslKey=/etc/ssl/mumble/privkey.pem
 host=
 port=64738
 
-; Welcome message shown to connecting clients. Override at runtime if desired.
-welcometext="<br />Welcome to this Mumble server.<br />"
+; Welcome message shown to connecting clients. Injected at first boot.
+welcometext="__MUMBLE_WELCOME_TEXT__"
 
 ; Users / channels
 users=100
