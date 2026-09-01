@@ -68,6 +68,10 @@ sed -i "s|__MUMBLE_SUPERUSER_PASSWORD__|${MUMBLE_SUPERUSER_PASSWORD}|" "${MUMBLE
 WELCOME="${MUMBLE_WELCOME_TEXT:-Welcome to this Mumble server.}"
 sed -i "s|__MUMBLE_WELCOME_TEXT__|${WELCOME}|" "${MUMBLE_INI}"
 
+# Inject the server password (optional; empty means an open server).
+SERVER_PW="${MUMBLE_SERVER_PASSWORD:-}"
+sed -i "s|__MUMBLE_SERVER_PASSWORD__|${SERVER_PW}|" "${MUMBLE_INI}"
+
 # Ownership: mumble-server (the service user) must be able to read this.
 chown root:mumble-server "${MUMBLE_INI}"
 chmod 640 "${MUMBLE_INI}"

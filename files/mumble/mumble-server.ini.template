@@ -29,3 +29,7 @@ logfile=/var/log/mumble-server/mumble-server.log
 ; on the first start, then stripped from this file by mumble-first-boot.sh.
 ; It must NOT persist in plaintext on disk.
 superuserpassword=__MUMBLE_SUPERUSER_PASSWORD__
+
+; Server password — clients are prompted to join if set. Injected at first
+; boot; empty means an open server (no prompt).
+serverpassword="__MUMBLE_SERVER_PASSWORD__"
