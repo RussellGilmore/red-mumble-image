@@ -77,3 +77,92 @@ supports:
 
 The instance's IAM role must permit Route53 record changes on the domain's
 hosted zone for the DNS-01 challenge.
+
+## Deploying with red-instance
+
+This image pairs with the
+[terraform-aws-red-instance](https://github.com/RussellGilmore/terraform-aws-red-instance)
+module (>= v2.2.0), which provides the `enable_route53_policy` and `user_data`
+inputs this image needs.
+
+A cloud-config user-data template (`mumble-user-data.yaml.tftpl`) writes the env
+file and runs first-boot:
+
+```yaml
+#cloud-config
+write_files:
+    - path: /etc/red-mumble/first-boot.env
+      owner: root:root
+      permissions: "0600"
+      content: |
+          MUMBLE_DOMAIN=${mumble_domain}
+          LE_EMAIL=${le_email}
+          MUMBLE_SUPERUSER_PASSWORD="${superuser_password}"
+          MUMBLE_WELCOME_TEXT="${welcome_text}"
+          MUMBLE_SERVER_PASSWORD="${server_password}"
+
+runcmd:
+    - /usr/local/sbin/mumble-first-boot.sh
+```
+
+And the module call:
+
+```hcl
+module "mumble" {
+  source = "git::https://github.com/RussellGilmore/terraform-aws-red-instance.git?ref=v2.2.0"
+
+  project_name  = "red-space"
+  instance_name = "Mumble"
+
+  instance_type = "t4g.micro"
+  ami_name      = "red-mumble-*"        # matches the Packer ami_name_prefix
+  ami_owner     = var.mumble_ami_owner  # your account ID (you built the AMI)
+  volume_size   = 16
+
+  # Standalone: the module provisions its own public VPC.
+  create_vpc        = true
+  availability_zone = "us-east-1f"
+  allocate_eip      = true
+
+  # Mumble uses 64738 TCP + UDP. No SSH (SSM-only), no port 80 (DNS-01).
+  ingress_rules = [
+    {
+      description = "Mumble TCP"
+      from_port   = 64738
+      to_port     = 64738
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    },
+    {
+      description = "Mumble UDP"
+      from_port   = 64738
+      to_port     = 64738
+      protocol    = "udp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  ]
+
+  # Route53 for DNS-01 cert issuance and renewal.
+  enable_route53_policy = true
+  route53_zone_id       = var.mumble_zone_id
+
+  # Rendered user-data carrying domain and secrets.
+  user_data = templatefile("${path.module}/mumble-user-data.yaml.tftpl", {
+    mumble_domain      = "mumble.example.org"
+    le_email           = var.le_email
+    superuser_password = var.mumble_superuser_password
+    welcome_text       = var.mumble_welcome_text
+    server_password    = var.mumble_server_password
+  })
+
+  # Public DNS A record for the server.
+  enable_public_dns = true
+  apex_domain       = "example.org"
+  dns_name          = "mumble.example.org"
+}
+```
+
+Secret values (`le_email`, `mumble_superuser_password`,
+`mumble_server_password`) are supplied via Terraform variables sourced from a
+local, gitignored `.env` (as `TF_VAR_*`) at apply time, so they never enter
+source control.
