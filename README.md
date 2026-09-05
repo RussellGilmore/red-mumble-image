@@ -44,7 +44,7 @@ Baked into the image:
 -   AWS credentials configured (env vars, shared config, or instance profile)
 -   A build VPC/subnet with outbound internet access
 -   An IAM instance profile for the build with `AmazonSSMManagedInstanceCore`
-    (Packer connects via Session Manager)
+    (Packer connects via Session Manager — see [Build IAM](#build-iam))
 
 ## Build
 
@@ -60,6 +60,50 @@ packer build .
 
 The build prints the resulting AMI ID on completion. See `variables.pkr.hcl` for
 all available build variables.
+
+## Build IAM
+
+The build instance connects via AWS Session Manager (no SSH keys), so it needs
+an instance profile with SSM permissions. Create this once in your account
+before building:
+
+```hcl
+resource "aws_iam_role" "packer_build" {
+  name        = "PackerBuildRole"
+  description = "Role assumed by Packer build instances for SSM connectivity"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "packer_build_ssm" {
+  role       = aws_iam_role.packer_build.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "packer_build" {
+  name = aws_iam_role.packer_build.name
+  role = aws_iam_role.packer_build.name
+}
+```
+
+Pass the instance profile name to the build via the `iam_instance_profile`
+variable (see `example.pkrvars.hcl`). The identity you run Packer with (your AWS
+credentials) also needs permissions to launch instances, create AMIs and
+snapshots, and manage temporary build resources — see the
+[Packer AWS documentation](https://developer.hashicorp.com/packer/integrations/hashicorp/amazon#iam-task-or-instance-role)
+for the minimal build policy.
+
+> **Building via CI?** GitHub Actions can assume a role via OIDC instead of
+> stored credentials. That setup (an OIDC provider plus a scoped role trusted by
+> your repo) is account-specific and left to the consumer; see HashiCorp and
+> GitHub's OIDC documentation.
 
 ## Runtime configuration contract
 
@@ -148,7 +192,7 @@ module "mumble" {
 
   # Rendered user-data carrying domain and secrets.
   user_data = templatefile("${path.module}/mumble-user-data.yaml.tftpl", {
-    mumble_domain      = "mumble.example.org"
+    mumble_domain      = "mumble.example.com"
     le_email           = var.le_email
     superuser_password = var.mumble_superuser_password
     welcome_text       = var.mumble_welcome_text
@@ -157,8 +201,8 @@ module "mumble" {
 
   # Public DNS A record for the server.
   enable_public_dns = true
-  apex_domain       = "example.org"
-  dns_name          = "mumble.example.org"
+  apex_domain       = "example.com"
+  dns_name          = "mumble.example.com"
 }
 ```
 

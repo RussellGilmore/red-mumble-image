@@ -2,8 +2,7 @@
 set -euo pipefail
 
 # certbot deploy-hook: runs ONLY when a certificate is actually issued or
-# renewed. certbot sets $RENEWED_LINEAGE to the live dir of the changed cert,
-# e.g. /etc/letsencrypt/live/mumble.orgychat.org
+# renewed. certbot sets $RENEWED_LINEAGE to the live dir of the changed cert.
 #
 # Copies cert + key into mumble's directory with ownership/permissions the
 # mumble-server user can read, then restarts mumble to load the new cert.

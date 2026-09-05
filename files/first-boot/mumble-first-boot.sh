@@ -6,8 +6,8 @@ set -euo pipefail
 #
 # Invoked by cloud-init from the instance's user-data. Expects user-data to
 # have written /etc/red-mumble/first-boot.env with:
-#   MUMBLE_DOMAIN=mumble.example.org
-#   LE_EMAIL=you@example.org
+#   MUMBLE_DOMAIN=mumble.example.com
+#   LE_EMAIL=you@example.com
 #   MUMBLE_SUPERUSER_PASSWORD=<secret>
 # ---------------------------------------------------------------------------
 
