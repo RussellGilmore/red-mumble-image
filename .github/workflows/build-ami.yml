@@ -19,6 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
 
+      - name: Debug OIDC claims
+        run: |
+          echo "repo: ${{ github.repository }}"
+          echo "ref: ${{ github.ref }}"
+          echo "sub would be: repo:${{ github.repository }}:ref:${{ github.ref }}"
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v6.2.4
         with:
