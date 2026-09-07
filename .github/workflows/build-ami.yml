@@ -24,6 +24,15 @@ jobs:
           echo "repo: ${{ github.repository }}"
           echo "ref: ${{ github.ref }}"
           echo "sub would be: repo:${{ github.repository }}:ref:${{ github.ref }}"
+      - name: Dump actual OIDC token claims
+        run: |
+          TOKEN=$(curl -sH "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
+          echo "$TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq '{sub, aud, iss, repository}'
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN:
+            ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v6.2.4
         with:
