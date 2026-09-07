@@ -29,6 +29,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.PACKER_CI_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
+          audience: sts.amazonaws.com
 
       - name: Setup Packer
         uses: hashicorp/setup-packer@v3.4.0
