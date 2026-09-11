@@ -18,3 +18,11 @@ repos:
     hooks:
       - id: gitleaks
         name: Gitleaks Scanner
+  - repo: local
+    hooks:
+      - id: packer-fmt
+        name: Packer Format
+        entry: packer fmt -check .
+        language: system
+        files: \.pkr\.hcl$
+        pass_filenames: false
