@@ -32,15 +32,41 @@ source "${ENV_FILE}"
 
 # ---------------------------------------------------------------------------
 # 1. Obtain the certificate via DNS-01 (Route53), using the instance role.
+#    Retries with backoff to ride out transient Let's Encrypt secondary-
+#    validation failures
 # ---------------------------------------------------------------------------
 if [[ ! -d "/etc/letsencrypt/live/${MUMBLE_DOMAIN}" ]]; then
   echo "[first-boot] Requesting certificate for ${MUMBLE_DOMAIN} via DNS-01 (Route53)..."
-  certbot certonly \
-    --dns-route53 \
-    --non-interactive \
-    --agree-tos \
-    -m "${LE_EMAIL}" \
-    -d "${MUMBLE_DOMAIN}"
+
+  CERT_MAX_ATTEMPTS=5
+  CERT_RETRY_DELAY=60   # seconds between attempts
+  cert_obtained=false
+
+  for attempt in $(seq 1 "${CERT_MAX_ATTEMPTS}"); do
+    echo "[first-boot] certbot attempt ${attempt}/${CERT_MAX_ATTEMPTS}..."
+    if certbot certonly \
+        --dns-route53 \
+        --dns-route53-propagation-seconds 30 \
+        --non-interactive \
+        --agree-tos \
+        -m "${LE_EMAIL}" \
+        -d "${MUMBLE_DOMAIN}"; then
+      cert_obtained=true
+      echo "[first-boot] Certificate obtained on attempt ${attempt}."
+      break
+    fi
+    if [[ "${attempt}" -lt "${CERT_MAX_ATTEMPTS}" ]]; then
+      echo "[first-boot] certbot attempt ${attempt} failed; retrying in ${CERT_RETRY_DELAY}s..."
+      sleep "${CERT_RETRY_DELAY}"
+    fi
+  done
+
+  if [[ "${cert_obtained}" != "true" ]]; then
+    echo "[first-boot] ERROR: certbot failed after ${CERT_MAX_ATTEMPTS} attempts." >&2
+    echo "[first-boot] The certbot renewal timer will keep retrying in the background." >&2
+    # See the failure-handling decision below — this exit is one choice.
+    exit 1
+  fi
 else
   echo "[first-boot] Certificate for ${MUMBLE_DOMAIN} already exists; skipping issuance."
 fi
