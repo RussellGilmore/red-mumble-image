@@ -1,18 +1,12 @@
 name: Build Mumble AMI
 
 on:
-  # push:
-  #   tags:
-  #     - 'v*'
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-
+    tags:
+      - "v*"
 permissions:
   id-token: write
   contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest

@@ -6,8 +6,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo "[99] Re-enabling background apt timers for the deployed image..."
 # The timers were disabled in 10-apt-baseline.sh to avoid dpkg lock contention
 # during the build. Re-enable them here so instances launched from this AMI
-# receive automatic security updates. (Enabled, not started — they start on
-# boot of the deployed instance.)
+# receive automatic security updates.
 systemctl enable apt-daily.timer apt-daily-upgrade.timer 2>/dev/null || true
 
 echo "[99] Cleaning up before snapshot..."

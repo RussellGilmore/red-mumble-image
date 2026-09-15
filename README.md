@@ -1,5 +1,7 @@
 # Red Mumble Image
 
+## [![Red Mumble Image](https://github.com/RussellGilmore/red-mumble-image/actions/workflows/build-ami.yml/badge.svg?branch=main)](https://github.com/RussellGilmore/red-mumble-image/actions/workflows/build-ami.yml)
+
 Packer configuration that builds a public AWS AMI running a
 [Mumble](https://www.mumble.info/) (Murmur) voice server with automatic TLS via
 Let's Encrypt DNS-01 challenges through Route53.
@@ -7,10 +9,8 @@ Let's Encrypt DNS-01 challenges through Route53.
 ## Overview
 
 This image bakes in everything a Mumble server needs and defers all
-domain-specific and secret configuration to first boot via cloud-init. The
-resulting AMI is **public-safe and domain-agnostic** — it contains no
-certificates, keys, domain names, or passwords. Launch it for any domain by
-supplying values through EC2 user-data.
+domain-specific and secret configuration to first boot via cloud-init. Launch it
+for any domain by supplying values through EC2 user-data.
 
 Key design points:
 
