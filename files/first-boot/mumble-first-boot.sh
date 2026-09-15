@@ -39,14 +39,13 @@ if [[ ! -d "/etc/letsencrypt/live/${MUMBLE_DOMAIN}" ]]; then
   echo "[first-boot] Requesting certificate for ${MUMBLE_DOMAIN} via DNS-01 (Route53)..."
 
   CERT_MAX_ATTEMPTS=5
-  CERT_RETRY_DELAY=60   # seconds between attempts
+  CERT_RETRY_DELAY=60
   cert_obtained=false
 
   for attempt in $(seq 1 "${CERT_MAX_ATTEMPTS}"); do
     echo "[first-boot] certbot attempt ${attempt}/${CERT_MAX_ATTEMPTS}..."
     if certbot certonly \
         --dns-route53 \
-        --dns-route53-propagation-seconds 30 \
         --non-interactive \
         --agree-tos \
         -m "${LE_EMAIL}" \
@@ -64,7 +63,6 @@ if [[ ! -d "/etc/letsencrypt/live/${MUMBLE_DOMAIN}" ]]; then
   if [[ "${cert_obtained}" != "true" ]]; then
     echo "[first-boot] ERROR: certbot failed after ${CERT_MAX_ATTEMPTS} attempts." >&2
     echo "[first-boot] The certbot renewal timer will keep retrying in the background." >&2
-    # See the failure-handling decision below — this exit is one choice.
     exit 1
   fi
 else
